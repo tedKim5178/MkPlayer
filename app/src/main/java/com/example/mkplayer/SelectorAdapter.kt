@@ -6,8 +6,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-// TODO :: DataBinding
-class SelectorAdapter(private val datas: ArrayList<String>) :
+class SelectorAdapter(private val datas: List<String>) :
     RecyclerView.Adapter<SelectorViewHolder>() {
 
     interface OnItemClickListener {
@@ -21,8 +20,7 @@ class SelectorAdapter(private val datas: ArrayList<String>) :
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SelectorViewHolder {
-        val view =
-            LayoutInflater.from(parent.context).inflate(R.layout.item_selector, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_selector, parent, false)
         val holder = SelectorViewHolder(view)
         listener?.also {
             holder.setOnItemClickListener(it)
@@ -36,10 +34,6 @@ class SelectorAdapter(private val datas: ArrayList<String>) :
 
     override fun getItemCount(): Int {
         return datas.size
-    }
-
-    fun getItem(position: Int): String {
-        return datas[position]
     }
 }
 

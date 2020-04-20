@@ -7,9 +7,8 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import com.example.mkplayer.databinding.FragmentSelectorBinding
 
-// TODO :: Databinding
 class SelectorFragment private constructor() : Fragment() {
 
     companion object {
@@ -30,17 +29,13 @@ class SelectorFragment private constructor() : Fragment() {
 
         fun hide(fragment: SelectorFragment) {
             val activity = fragment.activity
-            activity?.let {
-                it.supportFragmentManager
-                    .beginTransaction()
-                    .remove(fragment)
-                    .commitAllowingStateLoss()
-            }
+            activity?.supportFragmentManager?.beginTransaction()?.remove(fragment)
+                ?.commitAllowingStateLoss()
         }
 
         private fun getBundle(texts: ArrayList<String>): Bundle {
             val bundle = Bundle()
-            bundle.putStringArrayList("texts", texts)
+            bundle.putStringArrayList(BUNDLE_KEY_SELECTOR_TEXTS, texts)
             return bundle
         }
     }
@@ -49,15 +44,17 @@ class SelectorFragment private constructor() : Fragment() {
         fun onClick(position: Int)
     }
 
-    private var texts: ArrayList<String>? = null
+    private val texts = mutableListOf<String>()
     private var listener: SelectorItemClickedCallback? = null
-    private lateinit var recyclerView: RecyclerView
+    private lateinit var binding: FragmentSelectorBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val args = arguments
         args?.let {
-            this.texts = it.getStringArrayList("texts")
+            it.getStringArrayList(BUNDLE_KEY_SELECTOR_TEXTS)?.apply {
+                texts.addAll(this)
+            }
         }
     }
 
@@ -66,12 +63,11 @@ class SelectorFragment private constructor() : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.fragment_selector, container, false)
-        recyclerView = view.findViewById<RecyclerView>(R.id.list).apply {
+        binding = FragmentSelectorBinding.inflate(inflater, container, false)
+        binding.list.apply {
             setHasFixedSize(true)
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
-            // TODO :: texts!! !! 제거
-            adapter = SelectorAdapter(texts!!).apply {
+            adapter = SelectorAdapter(texts).apply {
                 setOnItemClickListener(object :
                     SelectorAdapter.OnItemClickListener {
                     override fun onItemClick(v: View, position: Int) {
@@ -80,7 +76,7 @@ class SelectorFragment private constructor() : Fragment() {
                 })
             }
         }
-        return view
+        return binding.root
     }
 
     fun setSelectorItemClickedCallback(listener: SelectorItemClickedCallback) {
