@@ -60,53 +60,22 @@ class PlayerFragment : Fragment() {
     }
 
     private val videoViewModel: VideoViewModel by activityViewModels()
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        videoViewModel.getPlaylist().observe(this, Observer {
+        videoViewModel.getPlaylist().observe(viewLifecycleOwner, Observer {
             this.playlist = it
             initializePlayer()
             shouldPlayWithDelay = false
         })
 
         binding = FragmentPlayerBinding.inflate(inflater, container, false)
-        binding.playerView.setControllerVisibilityListener {
-            if (it == View.VISIBLE) {
-                binding.selectTracksButton.visibility = View.VISIBLE
-                binding.pip.visibility = View.VISIBLE
-                updateButtonEnabled()
-            } else {
-                binding.selectTracksButton.visibility = View.GONE
-                binding.pip.visibility = View.GONE
-            }
-        }
-
-        binding.selectTracksButton.setOnClickListener {
-            val mappedTrackInfo = trackSelector?.currentMappedTrackInfo
-            var trackGroupArray: TrackGroupArray? = null
-            mappedTrackInfo?.let {
-                for (rendererIndex in 0 until it.rendererCount) {
-                    if (C.TRACK_TYPE_VIDEO == it.getRendererType(rendererIndex)) {
-                        videoRendererIndex = rendererIndex
-                        trackGroupArray = it.getTrackGroups(rendererIndex)
-                        break
-                    }
-                }
-            }
-
-            if (trackGroupArray?.isEmpty == false) {
-                showTrackSelectionSelector(trackGroupArray!!)
-            }
-        }
-
-        binding.pip.setOnClickListener {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val builder = PictureInPictureParams.Builder().build()
-                activity?.enterPictureInPictureMode(builder)
-            }
-        }
+        binding.playerView.setControllerVisibilityListener { updateButtons(it) }
+        binding.selectTracksButton.setOnClickListener { onSelectTracksButtonClicked() }
+        binding.pip.setOnClickListener { onPipButtonClicked() }
 
         // TODO :: use viewModel? or arguments?
         arguments?.let {
@@ -117,6 +86,7 @@ class PlayerFragment : Fragment() {
         clearStartPosition()
 
         // TODO :: Cast
+
         return binding.root
     }
 
@@ -212,8 +182,6 @@ class PlayerFragment : Fragment() {
     }
 
     private fun initializePlayer() {
-        // tip1 :: default is Adaptive.
-        // tip2 :: if only one track is available, use Fixed instead of Adpative internally
         val trackSelectionFactory = AdaptiveTrackSelection.Factory()
         trackSelector = DefaultTrackSelector(trackSelectionFactory)
 
@@ -221,10 +189,7 @@ class PlayerFragment : Fragment() {
         binding.playerView.player = player
         dataSourceFactory = DefaultDataSourceFactory(context, "exoplayer-codelab")
 
-        // TODO :: add Ad later
-//        if (hasAds) {
-//            source = getAdsMediaSource(source)
-//        }
+        // TODO :: 광고 추가
 
         val mediaSourceArray = arrayOfNulls<MediaSource>(playlist.size)
         for ((index, video) in playlist.withIndex()) {
@@ -239,14 +204,14 @@ class PlayerFragment : Fragment() {
         player?.playWhenReady = true
     }
 
-    private fun getMediaSource(contentUrl: String): MediaSource {
-        return HlsMediaSource.Factory(dataSourceFactory)
-            .createMediaSource(Uri.parse(contentUrl))
-    }
-
     // TODO :: parsing url, giving right type of media source
     private fun getLocalMediaSource(url: String): MediaSource {
         return ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(Uri.parse(url))
+    }
+
+    private fun getMediaSource(contentUrl: String): MediaSource {
+        return HlsMediaSource.Factory(dataSourceFactory)
+            .createMediaSource(Uri.parse(contentUrl))
     }
 
     private fun getAdsMediaSource(mediaSource: MediaSource): MediaSource {
@@ -309,5 +274,41 @@ class PlayerFragment : Fragment() {
     private fun clearStartPosition() {
         startWindow = C.INDEX_UNSET
         startPosition = C.TIME_UNSET
+    }
+
+    private fun updateButtons(visibility: Int) {
+        if (visibility == View.VISIBLE) {
+            binding.selectTracksButton.visibility = View.VISIBLE
+            binding.pip.visibility = View.VISIBLE
+            updateButtonEnabled()
+        } else {
+            binding.selectTracksButton.visibility = View.GONE
+            binding.pip.visibility = View.GONE
+        }
+    }
+
+    private fun onSelectTracksButtonClicked() {
+        val mappedTrackInfo = trackSelector?.currentMappedTrackInfo
+        var trackGroupArray: TrackGroupArray? = null
+        mappedTrackInfo?.let {
+            for (rendererIndex in 0 until it.rendererCount) {
+                if (C.TRACK_TYPE_VIDEO == it.getRendererType(rendererIndex)) {
+                    videoRendererIndex = rendererIndex
+                    trackGroupArray = it.getTrackGroups(rendererIndex)
+                    break
+                }
+            }
+        }
+
+        if (trackGroupArray?.isEmpty == false) {
+            showTrackSelectionSelector(trackGroupArray!!)
+        }
+    }
+
+    private fun onPipButtonClicked() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val builder = PictureInPictureParams.Builder().build()
+            activity?.enterPictureInPictureMode(builder)
+        }
     }
 }
