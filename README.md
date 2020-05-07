@@ -27,3 +27,5 @@ Technology used
 ## 읽어볼만한..
 
 * [Coroutine vs RxJava](https://medium.com/@limgyumin/코틀린에서-비동기-코드-구현-코루틴-vs-rxjava-e4ea7820540e)
+* [어노테이션 프로세서](https://www.charlezz.com/?p=1167)
+* [DI(의존성주입)](https://www.charlezz.com/?p=428)
